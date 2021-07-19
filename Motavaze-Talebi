@@ -1,0 +1,271 @@
+############################# Model distance calculation
+
+###################### NON-BAYESIAN ##############
+library(psych)
+library(MASS)
+############## input the design matrix
+#D2 
+x=matrix(c(
+1,1,-1,1,-1,
+1,1,1,-1,1,
+1,-1,1,1,-1,
+1,1,-1,1,1,
+1,1,1,-1,1,
+1,1,1,1,-1,
+1,-1,1,1,1,
+1,-1,-1,1,1,
+1,-1,-1,-1,1,
+1,1,-1,-1,-1,
+1,-1,1,-1,-1,
+1,-1,-1,-1,-1
+),12,5,byrow=T)
+x
+
+########### defining interactions 
+
+bc=cbind(x[,2]*x[,3])
+be=cbind(x[,2]*x[,4])
+bq=cbind(x[,2]*x[,5])
+ce=cbind(x[,3]*x[,4])
+cq=cbind(x[,3]*x[,5])
+eq=cbind(x[,4]*x[,5])
+m2=cbind(bc,be,bq,ce,cq,eq)
+
+a=bq        # interaction of rival models
+b=eq        # interaction of rival models
+
+beta0=c(0.0423,-0.0827)
+m=cbind(bq,cq)
+m0=m%*%beta0
+mi=cbind(a,b)
+hi=mi%*%solve(t(mi)%*%mi)%*%t(mi)
+A=x%*%diag(5)%*%t(x)
+wi=mi%*%solve(t(mi)%*%A%*%mi)%*%t(mi)%*%A
+                                     ### homoscedaticity
+mmdhom=t(m0)%*%(diag(12)-hi)%*%m0         
+mmdhom
+                                    ### heteroscedaticity
+mmdhet=t(m0)%*%(diag(12)-hi)%*%m0+4*t(m0)%*%(A-A%*%wi-t(wi)%*%A+t(wi)%*%A%*%wi)%*%m0
+mmdhet
+
+
+###################### Model distance calculation
+###################### BAYESIAN ##############
+
+library(psych)
+library(MASS)
+#D2 - Revstat
+x=matrix(c(
+1,1,-1,1,-1,
+1,1,1,-1,1,
+1,-1,1,1,-1,
+1,1,-1,1,1,
+1,1,1,-1,1,
+1,1,1,1,-1,
+1,-1,1,1,1,
+1,-1,-1,1,1,
+1,-1,-1,-1,1,
+1,1,-1,-1,-1,
+1,-1,1,-1,-1,
+1,-1,-1,-1,-1
+),12,5,byrow=T)
+
+###########    Bayesian MMD criteria
+
+bc=cbind(x[,2]*x[,3])
+be=cbind(x[,2]*x[,4])
+bq=cbind(x[,2]*x[,5])
+ce=cbind(x[,3]*x[,4])
+cq=cbind(x[,3]*x[,5])
+eq=cbind(x[,4]*x[,5])
+m2=cbind(bc,be,bq,ce,cq,eq)
+a=ce
+b=cq
+m=cbind(bq,cq)
+m0=m%*%diag(2)%*%t(m)
+
+mi=cbind(a,b)
+hi=mi%*%solve(t(mi)%*%mi)%*%t(mi)
+                                     ### homoscedaticity
+bmmdh=tr((diag(12)-hi)%*%m0)
+
+A=x%*%diag(5)%*%t(x)
+wi=mi%*%solve(t(mi)%*%A%*%mi)%*%t(mi)%*%A
+
+                                    ### heteroscedaticity
+bmmdnh=bmmdh+4*tr((A-A%*%wi-t(wi)%*%A+t(wi)%*%A%*%wi)%*%m0)
+bmmdh
+bmmdnh
+
+
+##################  Design criteria value for t=2 under 4 factor designs and homoscdaticity
+library(psych)
+library(MASS)
+#D3 - Revstat
+x=matrix(c(
+1,1,1,1,1,
+1,1,-1,1,1,
+1,-1,-1,1,1,
+1,-1,1,-1,1,
+1,1,-1,-1,1,
+1,-1,-1,-1,1,
+1,-1,1,1,-1,
+1,1,-1,1,-1,
+1,-1,-1,1,-1,
+1,1,1,-1,-1,
+1,1,-1,-1,-1,
+1,-1,-1,-1,-1
+),12,5,byrow=T)
+
+###########    defining interactions ##########
+ab=cbind(x[,2]*x[,3])
+ac=cbind(x[,2]*x[,4])
+ad=cbind(x[,2]*x[,5])
+bc=cbind(x[,3]*x[,4])
+bd=cbind(x[,3]*x[,5])
+cd=cbind(x[,4]*x[,5])
+abc=ab*x[,4]
+abd=ab*x[,5]
+acd=ac*x[,5]
+bcd=bc*x[,5]
+
+m2=cbind(ab,ac,ad,bc,bd,cd)
+m=cbind(m2)
+k=matrix(NA,ncol(m),ncol(m))
+#prior
+sigma=diag(rep(1,5))
+sigma0=diag(1)
+di=diag(rep(1,12))
+a=x%*%sigma%*%t(x)
+for(i in 1:ncol(m)) {
+    for(j in 1:ncol(m)) {
+h1=m[,j]%*%solve(t(m[,j])%*%m[,j])%*%t(m[,j])
+w1=m[,j]%*%solve(t(m[,j])%*%a%*%m[,j])%*%t(m[,j])%*%a
+s=m[,i]%*%sigma0%*%t(m[,i])
+if(i!=j) k[i,j]=tr((di-h1)%*%s)
+else  k[i,j]=10000
+}
+}
+k
+min(k)
+
+
+############## Design criteria values for t=2 under 4 factor designs and hetroscdeasticity models
+library(psych)
+library(MASS)
+#D2 - Revstat
+x=matrix(c(
+1,1,-1,1,-1,
+1,1,1,-1,1,
+1,-1,1,1,-1,
+1,1,-1,1,1,
+1,1,1,-1,1,
+1,1,1,1,-1,
+1,-1,1,1,1,
+1,-1,-1,1,1,
+1,-1,-1,-1,1,
+1,1,-1,-1,-1,
+1,-1,1,-1,-1,
+1,-1,-1,-1,-1
+),12,5,byrow=T)
+###########    fully observed ,2factor interactions ##########
+ab=cbind(x[,2]*x[,3])
+ac=cbind(x[,2]*x[,4])
+ad=cbind(x[,2]*x[,5])
+bc=cbind(x[,3]*x[,4])
+bd=cbind(x[,3]*x[,5])
+cd=cbind(x[,4]*x[,5])
+
+m2=cbind(ab,ac,ad,bc,bd,cd)
+
+m=cbind(m2)
+
+m=as.data.frame(m)
+comb=combn(m,2,simplify=FALSE)
+qq=array(NA,dim=c(12,2,choose(ncol(m),2)))
+for(i in 1:choose(ncol(m),2)) {
+qq[,,i]=as.matrix(comb[[i]])
+}
+
+#prior
+sigma0=1*diag(2)
+sigma=diag(12)
+sigma1=diag(5)
+di=diag(rep(1,12))
+ee=x%*%sigma1%*%t(x)
+
+k=matrix(NA,choose(ncol(m),2),choose(ncol(m),2))
+for(i in 1:choose(ncol(m),2)) {
+    for(j in 1:choose(ncol(m),2)) {
+h1=qq[,,j]%*%ginv(t(qq[,,j])%*%qq[,,j])%*%t(qq[,,j])
+w1=qq[,,j]%*%ginv(t(qq[,,j])%*%x%*%sigma1%*%t(x)%*%qq[,,j])%*%t(qq[,,j])%*%x%*%sigma1%*%t(x)
+s=qq[,,i]%*%sigma0%*%t(qq[,,i])
+if(i!=j) k[i,j]=tr((di-h1)%*%s)+4*tr((ee-ee%*%w1-t(w1)%*%ee+t(w1)%*%ee%*%w1)%*%s)
+else  k[i,j]=10000
+}
+}
+k
+min(k)
+
+############## Design criteria values for t=1 under 5 factor designs and hetroscdeasticity models
+
+library(psych)
+#D1- Buletin      ##### enter the design
+x=matrix(c(
+1,1,1,1,1,1,
+1,-1,-1,-1,1,-1,
+1,1,-1,-1,-1,1,
+1,1,1,-1,-1,-1,
+1,1,1,1,-1,-1,
+1,-1,1,1,1,-1,
+1,1,-1,1,1,1,
+1,-1,1,-1,1,1,
+1,-1,-1,1,-1,1,
+1,1,-1,-1,1,-1,
+1,-1,1,-1,-1,1,
+1,-1,-1,1,-1,-1
+),12,6,byrow=T)
+
+###########    fully observed ,2factor interactions ##########
+ab=cbind(x[,2]*x[,3])
+ac=cbind(x[,2]*x[,4])
+ad=cbind(x[,2]*x[,5])
+ae=cbind(x[,2]*x[,6])
+bc=cbind(x[,3]*x[,4])
+bd=cbind(x[,3]*x[,5])
+be=cbind(x[,3]*x[,6])
+cd=cbind(x[,4]*x[,5])
+ce=cbind(x[,4]*x[,6])
+de=cbind(x[,5]*x[,6])
+abc=ab*x[,4]
+abd=ab*x[,5]
+abe=ab*x[,6]
+acd=ac*x[,5]
+ace=ac*x[,6]
+ade=ad*x[,6]
+bcd=bc*x[,5]
+bce=bc*x[,6]
+bde=bd*x[,6]
+cde=cd*x[,6]
+
+m2=cbind(ab,ac,ad,ae,bc,bd,be,cd,ce,de)
+m3=cbind(abc,abd,abe,acd,ace,ade,bcd,bce,bde,cde)
+m=cbind(m2,m3)                         #beta2 set
+k=matrix(NA,ncol(m),ncol(m))
+#prior
+sigma=diag(rep(1,6))
+sigma0=diag(1)
+di=diag(rep(1,12))
+a=x%*%sigma%*%t(x)
+for(i in 1:ncol(m)) {
+    for(j in 1:ncol(m)) {
+h1=m[,j]%*%solve(t(m[,j])%*%m[,j])%*%t(m[,j])
+w1=m[,j]%*%solve(t(m[,j])%*%a%*%m[,j])%*%t(m[,j])%*%a
+s=m[,i]%*%sigma0%*%t(m[,i])
+if(i!=j) k[i,j]=tr((di-h1)%*%s)+4*tr((a-a%*%w1-t(w1)%*%a+t(w1)%*%a%*%w1)%*%(s))
+
+else  k[i,j]=10000
+}
+}
+k
+min(k)
